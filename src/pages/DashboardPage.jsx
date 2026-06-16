@@ -21,20 +21,17 @@ export default function DashboardPage({ session }) {
   }
 
   async function fetchStats() {
-    const { data } = await supabase
-      .from('tasks')
-      .select('status');
+    const { data } = await supabase.from('tasks').select('status');
     if (data) {
       const counts = { todo: 0, in_progress: 0, review: 0, done: 0 };
       data.forEach(t => { if (counts[t.status] !== undefined) counts[t.status]++; });
-      setStats(counts);
+      setStats(prev => ({ ...prev, ...counts }));
     }
   }
 
-  useEffect(() => { fetchUsers(); }, []);
-  useEffect(() => { fetchStats(); }, []);
-
   useEffect(() => {
+    fetchUsers();
+    fetchStats();
     supabase.from('boards').select('id').limit(1)
       .then(({ data }) => { if (data?.[0]) setBoardId(data[0].id); });
   }, []);
@@ -43,8 +40,6 @@ export default function DashboardPage({ session }) {
     <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
       <Navbar session={session} />
       <main style={{ padding: '2rem' }}>
-
-        {/* Compteurs par statut */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
           {[
             { label: '📋 À faire', key: 'todo', color: '#64748B' },
@@ -60,7 +55,6 @@ export default function DashboardPage({ session }) {
           ))}
         </div>
 
-        {/* Onglets */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
           {[['tasks', '📋 Tâches'], ['users', '👥 Utilisateurs']].map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)} style={{
@@ -73,10 +67,9 @@ export default function DashboardPage({ session }) {
           ))}
         </div>
 
-        {/* Contenu selon onglet */}
-        {tab === 'tasks' && boardId && <TaskList boardId={boardId} onTaskChange={fetchStats} />}
+        {tab === 'tasks' && boardId && <TaskList boardId={boardId} />}
         {tab === 'tasks' && !boardId && (
-          <p style={{ color: '#94A3B8' }}>Aucun tableau trouvé. Créez-en un via SQL Editor.</p>
+          <p style={{ color: '#94A3B8' }}>Aucun tableau trouvé.</p>
         )}
         {tab === 'users' && (
           loading ? <p>Chargement...</p> : <UserTable users={users} onRefresh={fetchUsers} />
