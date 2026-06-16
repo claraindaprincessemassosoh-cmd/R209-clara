@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { supabase } from './lib/supabase';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
+import ProfilePage from './pages/ProfilePage';
 
 function App() {
   const [session, setSession] = useState(null);
@@ -28,6 +29,8 @@ function App() {
           element={session ? <Navigate to='/dashboard' /> : <LoginPage />} />
         <Route path='/dashboard'
           element={session ? <DashboardPage session={session} /> : <Navigate to='/login' />} />
+        <Route path='/profile'
+          element={session ? <ProfilePage session={session} /> : <Navigate to='/login' />} />
         <Route path='*' element={<Navigate to={session ? '/dashboard' : '/login'} />} />
       </Routes>
     </BrowserRouter>

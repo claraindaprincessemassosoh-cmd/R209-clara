@@ -24,7 +24,7 @@ export default function TaskForm({ boardId, onCreated }) {
     setError('');
     if (!title.trim()) { setError('Le titre est obligatoire.'); return; }
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
+
     const { error } = await supabase.from('tasks').insert([{
       title: title.trim(),
       description: description.trim() || null,
@@ -32,16 +32,38 @@ export default function TaskForm({ boardId, onCreated }) {
       priority,
       board_id: boardId,
       category_id: categoryId || null,
-      due_date: dueDate || null,
-      created_by: user.id,
+      date: dueDate || null,
     }]);
+
     setLoading(false);
     if (error) { setError(error.message); return; }
+
+    // Envoyer un e-mail si une date d'échéance est définie
+    if (dueDate) {
+      const formattedDate = new Date(dueDate).toLocaleDateString('fr-FR', {
+        day: '2-digit', month: 'long', year: 'numeric'
+      });
+      const { data: { user } } = await supabase.auth.getUser();
+      await fetch('/api/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          to: [user.email],
+          subject: `📋 Tâche créée : ${title}`,
+          html: `
+            <h2>Tâche créée avec succès</h2>
+            <p><strong>Titre :</strong> ${title}</p>
+            <p><strong>Priorité :</strong> ${priority}</p>
+            <p><strong>Échéance :</strong> ${formattedDate}</p>
+          `,
+        }),
+      });
+    }
+
     setTitle(''); setDescription(''); setStatus('todo');
     setPriority('medium'); setCategoryId(''); setDueDate('');
     onCreated();
   }
-
   return (
     <div style={{ background: 'white', padding: '1.5rem', borderRadius: '10px',
       marginBottom: '1.5rem', border: '1px solid #E2E8F0' }}>

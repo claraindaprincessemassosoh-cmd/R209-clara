@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import UserTable from '../components/UserTable';
 import TaskList from '../components/TaskList';
+import Navbar from '../components/Navbar';
 
 export default function DashboardPage({ session }) {
   const [users, setUsers] = useState([]);
@@ -25,27 +26,10 @@ export default function DashboardPage({ session }) {
       .then(({ data }) => { if (data?.[0]) setBoardId(data[0].id); });
   }, []);
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-  }
-
   return (
     <div style={{ minHeight: '100vh', background: '#F8FAFC' }}>
-      <header style={{ background: '#1A8C82', color: 'white',
-        padding: '1rem 2rem', display: 'flex', justifyContent: 'space-between' }}>
-        <h1>🗂 KanbanRT — Dashboard</h1>
-        <div>
-          <span style={{ marginRight: '1rem' }}>{session.user.email}</span>
-          <button onClick={handleLogout}
-            style={{ background: 'white', color: '#1A8C82',
-              border: 'none', padding: '0.5rem 1rem', borderRadius: '6px',
-              cursor: 'pointer' }}>
-            Déconnexion
-          </button>
-        </div>
-      </header>
+      <Navbar session={session} />
       <main style={{ padding: '2rem' }}>
-        {/* Onglets */}
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
           {[['tasks', '📋 Tâches'], ['users', '👥 Utilisateurs']].map(([key, label]) => (
             <button key={key} onClick={() => setTab(key)} style={{
@@ -58,7 +42,6 @@ export default function DashboardPage({ session }) {
           ))}
         </div>
 
-        {/* Contenu selon onglet */}
         {tab === 'tasks' && boardId && <TaskList boardId={boardId} />}
         {tab === 'tasks' && !boardId && (
           <p style={{ color: '#94A3B8' }}>Aucun tableau trouvé. Créez-en un via SQL Editor.</p>
